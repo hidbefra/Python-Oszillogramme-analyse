@@ -1,3 +1,4 @@
+# vibe coding mit gemini :)
 # pip install pandas matplotlib PyQt5 scipy
 
 import pandas as pd
@@ -53,16 +54,15 @@ class PlotNavigator:
     Eine Klasse zur Verwaltung der interaktiven Navigation zwischen den Plots
     verschiedener CSV-Dateien.
     """
-    def __init__(self, combined_df, ax1, ax2, ax3, ax4, time_col, volt_col, curr_col, features, global_limits):
+    def __init__(self, combined_df, ax1, ax2, ax4, time_col, volt_col, curr_col, features, global_limits):
         self.combined_df = combined_df
         self.ax1 = ax1
         self.ax2 = ax2
-        self.ax3 = ax3
         self.ax4 = ax4
         self.time_col = time_col
         self.volt_col = volt_col
         self.curr_col = curr_col
-        self.power_col = 'Schaltleistung W'
+        self.power_col = 'Schaltleistung [W]'
         self.global_limits = global_limits
         self.features = features
         self.table = None
@@ -81,7 +81,6 @@ class PlotNavigator:
         """Konfiguriert die statischen Eigenschaften der Achsen einmalig."""
         volt_color = 'tab:blue'
         curr_color = 'tab:red'
-        simp_volt_color = 'tab:green'
         power_color = 'tab:purple'
 
         # Konfiguration für die erste Achse (Spannung, links)
@@ -99,27 +98,10 @@ class PlotNavigator:
         self.ax2.patch.set_visible(False)  # Mache den Hintergrund von ax2 transparent
         self.ax2.set_ylim(self.global_limits['curr'])
 
-        # Konfiguration für die dritte Achse (vereinfachte Spannung, rechts außen)
-        self.ax3.set_ylabel(self.simplified_volt_col, color=simp_volt_color)
-        self.ax3.tick_params(axis='y', labelcolor=simp_volt_color)
-        self.ax3.spines['right'].set_position(('outward', 60))  # Positioniere die Achse weiter rechts
-        self.ax3.patch.set_visible(False)
-        self.ax3.set_yticks([0, 1]) # Feste Ticks, da die Werte nur 0 oder 1 sind
-        
-        # Richte die 3. Achse relativ zur 1. Achse aus (nur einmal hier)
-        y1_min, y1_max = self.ax1.get_ylim()
-        if y1_max != y1_min:
-            p0 = (0 - y1_min) / (y1_max - y1_min)
-            p1 = (target_value_for_one - y1_min) / (y1_max - y1_min)
-            if p1 != p0:
-                new_y3_min = -p0 / (p1 - p0)
-                new_y3_max = (1 - p0) / (p1 - p0)
-                self.ax3.set_ylim(new_y3_min, new_y3_max)
-
         # Konfiguration für die vierte Achse (Schaltleistung, rechts ganz außen)
         self.ax4.set_ylabel(self.power_col, color=power_color)
         self.ax4.tick_params(axis='y', labelcolor=power_color)
-        self.ax4.spines['right'].set_position(('outward', 120)) # Positioniere die Achse noch weiter rechts
+        self.ax4.spines['right'].set_position(('outward', 80)) # Positioniere die Achse noch weiter rechts
         self.ax4.patch.set_visible(False)
         self.ax4.set_ylim(self.global_limits['power'])
 
@@ -130,9 +112,10 @@ class PlotNavigator:
         # Entferne alte Linien, anstatt die ganzen Achsen zu löschen
         for line in self.ax1.lines:
             line.remove()
+        # Die Linien von ax2, ax3, ax4 sind in ax1.lines enthalten, da sie twinx() sind.
+        # Ein explizites Löschen ist nicht nötig und kann zu Fehlern führen.
+        # Wir löschen sie trotzdem, um sicherzugehen, falls sich das Verhalten ändert.
         for line in self.ax2.lines:
-            line.remove()
-        for line in self.ax3.lines:
             line.remove()
         for line in self.ax4.lines:
             line.remove()
@@ -148,7 +131,6 @@ class PlotNavigator:
         # Zeichne die neuen Daten
         line1 = self.ax1.plot(df_to_plot[self.time_col], df_to_plot[self.volt_col], color='tab:blue', label='Spannung [V]')
         line2 = self.ax2.plot(df_to_plot[self.time_col], df_to_plot[self.curr_col], color='tab:red', label='Strom [A]')
-        line3 = self.ax3.plot(df_to_plot[self.time_col], df_to_plot[self.simplified_volt_col], color='tab:green', label=self.simplified_volt_col, linestyle='--', drawstyle='steps-post')
         line4 = self.ax4.plot(df_to_plot[self.time_col], df_to_plot[self.power_col], color='tab:purple', label=self.power_col, linestyle=':')
 
         # Hole die extrahierten Features für die aktuelle Datei
@@ -165,13 +147,15 @@ class PlotNavigator:
             self.ax_table.cla()
             self.table = self.ax_table.table(cellText=table_data, rowLabels=row_labels, loc='center')
             
-        self.ax1.set_title(f'Oszillogramm von: {current_file} ({self.current_index + 1}/{len(self.files)})')
-        # Platziere die Legende außerhalb des Plot-Bereichs
-        self.ax1.legend(
-            handles=line1 + line2 + line3 + line4,
-            loc='lower center',
-            bbox_to_anchor=(0.5, 1.05), # Positioniere sie über dem Plot
-            ncol=4, frameon=False)
+        # Titel und Legende nur für den oberen Plot (ax1) setzen
+        if self.ax1.get_figure().axes[0] == self.ax1:
+            self.ax1.set_title(f'Oszillogramm von: {current_file} ({self.current_index + 1}/{len(self.files)})')
+            # Platziere die Legende außerhalb des Plot-Bereichs
+            self.ax1.legend(
+                handles=line1 + line2 + line4, # line3 (vereinfachte Spannung) entfernt
+                loc='lower center',
+                bbox_to_anchor=(0.5, 1.05), # Positioniere sie über dem Plot
+                ncol=3, frameon=False)
         plt.draw()
 
     def next(self, event):
@@ -196,7 +180,7 @@ def import_data(data_folder):
     all_csv_files.sort()
 
     # Wähle nur jede 20. Datei aus
-    csv_files_to_load = all_csv_files[::1]
+    csv_files_to_load = all_csv_files[::20]
 
     if not csv_files_to_load:
         print(f"Nach dem Filtern (jede 20. Datei) wurden keine Dateien zum Laden ausgewählt aus insgesamt {len(all_csv_files)} Dateien.")
@@ -318,26 +302,29 @@ def add_simplified_voltage_column(df, volt_col):
 
 def add_power_column(df, volt_col, curr_col):
     """
-    Fügt eine neue Spalte 'Schaltleistung W' hinzu.
-    Die Leistung wird nur berechnet, wenn der Betrag des Stroms > 0.3A ist, sonst ist sie 0.
+    Fügt eine neue Spalte 'Schaltleistung [W]' hinzu.
+    Die Leistung wird nur berechnet, wenn der Betrag des Stroms > 0.3A und der Betrag der Spannung > 0.3V ist, sonst ist sie 0.
     """
-    new_col_name = 'Schaltleistung W'
-    power_threshold = 0.3
-    print(f"\n--- Spalte '{new_col_name}' hinzufügen (nur wenn |Strom| > {power_threshold}A) ---")
+    new_col_name = 'Schaltleistung [W]'
+    curr_threshold = 0.3
+    volt_threshold = 0.8
+    print(f"\n--- Spalte '{new_col_name}' hinzufügen (nur wenn |Strom| > {curr_threshold}A und |Spannung| > {volt_threshold}V) ---")
 
-    # Berechne die Leistung nur, wenn der Strom über dem Schwellenwert liegt, sonst 0
-    condition = df[curr_col].abs() > power_threshold
+    # Berechne die Leistung nur, wenn Strom und Spannung über ihren jeweiligen Schwellenwerten liegen, sonst 0
+    condition = (df[curr_col].abs() > curr_threshold) & (df[volt_col].abs() > volt_threshold)
     df[new_col_name] = np.where(condition, df[volt_col] * df[curr_col], 0)
     print(f"Spalte '{new_col_name}' wurde hinzugefügt.")
     return df
 
-def extract_features(df, time_col, opener_time_col, simplified_volt_col, power_col, prellen_time_range=(0.0, 0.02), ausschalt_time_range=(0.0, 0.02)):
+def extract_features(df, time_col, opener_time_col, simplified_volt_col, power_col, volt_col, prellen_time_range=(0.0, 0.02), ausschalt_time_range=(0.0, 0.02)):
     """
     Extrahiert spezifische Features (Prellen, Schaltarbeit, Ausschaltarbeit) für jede Datei.
     """
     print(f"\n--- Extrahiere Features ---")
     print(f"  - 'Prellen' und 'Schaltarbeit' im Zeitbereich {prellen_time_range}s (auf '{time_col}')")
     print(f"  - 'Ausschaltarbeit' im Zeitbereich {ausschalt_time_range}s (auf '{opener_time_col}')")
+    print(f"  - 'Prelldauer' im Zeitbereich {prellen_time_range}s (auf '{time_col}')")
+    print(f"  - 'Lichtbogendauer' im Zeitbereich {ausschalt_time_range}s (auf '{opener_time_col}')")
 
     features = {}
 
@@ -345,43 +332,74 @@ def extract_features(df, time_col, opener_time_col, simplified_volt_col, power_c
     for file_name, group in df.groupby('source_file'):
         file_features = {}
 
-        # --- Feature 1 & 2: Prellen und Schaltarbeit (Einschalten) ---
+        # --- Features beim Einschalten ---
         prellen_window = group[(group[time_col] >= prellen_time_range[0]) & (group[time_col] <= prellen_time_range[1])]
 
         if prellen_window.empty:
             file_features['Prellen'] = 0
-            file_features['Schaltarbeit Ws'] = 0.0
+            file_features['Prelldauer [s]'] = 0.0
+            file_features['Schaltarbeit [Ws]'] = 0.0
         else:
             # Prellen (Anzahl der 1->0 Wechsel)
             transitions = prellen_window[simplified_volt_col].diff()
             count_1_to_0 = (transitions == -1).sum()
             file_features['Prellen'] = count_1_to_0
 
+            # Prelldauer (Zeit des letzten 1->0 Wechsels)
+            last_bounce_indices = prellen_window.index[transitions == -1]
+            if not last_bounce_indices.empty:
+                file_features['Prelldauer [s]'] = round(prellen_window.loc[last_bounce_indices[-1], time_col], 5)
+            else:
+                file_features['Prelldauer [s]'] = 0.0
+
+
             # Schaltarbeit (Integral der Leistung über die Zeit)
             if len(prellen_window) > 1:
                 switching_work = np.trapezoid(y=prellen_window[power_col].abs(), x=prellen_window[time_col])
             else:
                 switching_work = 0.0
-            file_features['Schaltarbeit Ws'] = f"{switching_work:.4f}"
+            # Runde auf 4 signifikante Stellen
+            if switching_work != 0:
+                switching_work = round(switching_work, 4 - 1 - int(np.floor(np.log10(abs(switching_work)))))
+            file_features['Schaltarbeit [Ws]'] = switching_work
 
-        # --- Feature 3: Ausschaltarbeit (Ausschalten) ---
+        # --- Features beim Ausschalten ---
         ausschalt_window = group[(group[opener_time_col] >= ausschalt_time_range[0]) & (group[opener_time_col] <= ausschalt_time_range[1])]
 
         if ausschalt_window.empty or ausschalt_window[opener_time_col].isnull().all():
             turn_off_work = 0.0
+            arc_duration = 0.0
         else:
+            # Ausschaltarbeit
             if len(ausschalt_window) > 1:
                 turn_off_work = np.trapezoid(y=ausschalt_window[power_col].abs(), x=ausschalt_window[opener_time_col])
             else:
                 turn_off_work = 0.0
-        file_features['Ausschaltarbeit Ws'] = f"{turn_off_work:.4f}"
+            
+            # Lichtbogendauer (erster Nulldurchgang der Spannung)
+            # Finde, wo sich das Vorzeichen ändert (Produkt ist negativ)
+            zero_crossings = ausschalt_window.index[
+                (ausschalt_window[volt_col].shift(-1) * ausschalt_window[volt_col]) < 0
+            ]
+            if not zero_crossings.empty:
+                arc_duration = round(ausschalt_window.loc[zero_crossings[0], opener_time_col], 5)
+            else:
+                arc_duration = 0.0
+
+        # Runde auf 4 signifikante Stellen
+        if turn_off_work != 0:
+            turn_off_work = round(turn_off_work, 4 - 1 - int(np.floor(np.log10(abs(turn_off_work)))))
+        file_features['AusSchaltarbeit [Ws]'] = turn_off_work
+        file_features['Lichtbogendauer [s]'] = arc_duration
 
         features[file_name] = file_features
         print(
             f"  - Datei: {file_name}, "
-            f"Prellen: {file_features.get('Prellen', 'N/A')}, "
-            f"Schaltarbeit: {file_features.get('Schaltarbeit Ws', 'N/A')} Ws, "
-            f"Ausschaltarbeit: {file_features.get('Ausschaltarbeit Ws', 'N/A')} Ws"
+            f"Prellen: {file_features.get('Prellen', 0)}, "
+            f"Prelldauer: {file_features.get('Prelldauer [s]', 0.0):.5f} s, "
+            f"Schaltarbeit: {file_features.get('Schaltarbeit [Ws]', 0.0):.4f} Ws, "
+            f"Ausschaltarbeit: {file_features.get('AusSchaltarbeit [Ws]', 0.0):.4f} Ws, "
+            f"Lichtbogendauer: {file_features.get('Lichtbogendauer [s]', 0.0):.5f} s"
         )
 
     return features
@@ -459,8 +477,8 @@ def create_feature_summary_plot(features: Dict):
 
     # Konvertiere Spalten, die numerisch sein sollten, aber als Strings gespeichert sind
     for col in features_df.columns:
-        if 'Ws' in col:
-            features_df[col] = pd.to_numeric(features_df[col], errors='coerce')
+        # Konvertiere alle Spalten, die keine reinen Strings sein sollen, in numerische Werte
+        features_df[col] = pd.to_numeric(features_df[col], errors='coerce')
 
     num_features = len(features_df.columns)
     fig, axes = plt.subplots(nrows=num_features, ncols=1, figsize=(15, 5 * num_features), sharex=True)
@@ -475,7 +493,7 @@ def create_feature_summary_plot(features: Dict):
         ax = axes[i]
 
         # Wenn das Feature 'Schaltarbeit' oder 'Ausschaltarbeit' ist, erstelle einen Boxplot
-        if 'arbeit' in feature_name.lower() or 'prellen' in feature_name.lower():
+        if any(keyword in feature_name.lower() for keyword in ['arbeit', 'prellen', 'dauer']):
             group_size = 25
             data_series = features_df[feature_name].dropna()
 
@@ -512,27 +530,20 @@ def create_interactive_plot(df, time_col, opener_time_col, volt_col, curr_col, f
     fig.subplots_adjust(bottom=0.15, right=0.85, top=0.92, hspace=0.4)
 
     # --- Setup für den oberen Plot (Haupt-Zeitachse) ---
-    ax2 = ax1.twinx()
-    ax3 = ax1.twinx()
-    ax4 = ax1.twinx()
+    ax2_top = ax1.twinx()
+    ax4_top = ax1.twinx()
 
     # Erstelle den Navigator für den oberen Plot
-    navigator1 = PlotNavigator(df, ax1, ax2, ax3, ax4, time_col, volt_col, curr_col, features, global_limits)
+    # ax3 wird auf None gesetzt, um die vereinfachte Spannung nicht zu plotten
+    navigator1 = PlotNavigator(df, ax1, ax2_top, ax4_top, time_col, volt_col, curr_col, features, global_limits)
     ax1.set_xlim(global_limits['time'])
-    # Die Legende wird nur für den oberen Plot explizit gesetzt
-    navigator1.ax1.legend(
-        handles=navigator1.ax1.lines + navigator1.ax2.lines + navigator1.ax3.lines + navigator1.ax4.lines,
-        loc='lower center',
-        bbox_to_anchor=(0.5, 1.05), # Positioniere sie über dem Plot
-        ncol=4, frameon=False)
 
     # --- Setup für den unteren Plot (Öffner-Zeitachse) ---
-    ax2_2 = ax1_2.twinx()
-    ax3_2 = ax1_2.twinx()
-    ax4_2 = ax1_2.twinx()
+    ax2_bottom = ax1_2.twinx()
+    ax4_bottom = ax1_2.twinx()
 
     # Erstelle den Navigator für den unteren Plot
-    navigator2 = PlotNavigator(df, ax1_2, ax2_2, ax3_2, ax4_2, opener_time_col, volt_col, curr_col, features, global_limits)
+    navigator2 = PlotNavigator(df, ax1_2, ax2_bottom, ax4_bottom, opener_time_col, volt_col, curr_col, features, global_limits)
     ax1_2.set_xlim(global_limits['opener_time'])
     ax1_2.set_xlabel(opener_time_col) # Überschreibe das Standard-Label
 
@@ -622,25 +633,25 @@ def analyze_oscilloscope_data(data_folder):
     # 5. Spalte "öffner Zeit [s]" hinzufügen
     final_df = add_opener_time_column(final_df, time_col, volt_col)
 
-    # 6. Spalte "Schaltleistung W" hinzufügen
+    # 6. Spalte "Schaltleistung [W]" hinzufügen
     final_df = add_power_column(final_df, volt_col, curr_col)
 
     # 7. Spezifische Features für jede Datei extrahieren
-    features = extract_features(final_df, time_col, opener_time_col, 'vereinfachte Spannung', 'Schaltleistung W')
+    features = extract_features(final_df, time_col, opener_time_col, 'vereinfachte Spannung', 'Schaltleistung [W]', volt_col)
 
-    # NEUER SCHRITT: Filtere Messungen basierend auf den extrahierten Features
+    # 8. Filtere Messungen basierend auf den extrahierten Features
     print("\n--- Filtere Messungen mit hoher Schalt-/Ausschaltarbeit ---")
     work_threshold = 100.0
     files_to_remove = set()
     for file_name, feature_values in features.items():
         # Konvertiere die String-Werte in Floats für den Vergleich
-        schaltarbeit = float(feature_values.get('Schaltarbeit Ws', 0.0))
-        ausschaltarbeit = float(feature_values.get('Ausschaltarbeit Ws', 0.0))
+        schaltarbeit = float(feature_values.get('Schaltarbeit [Ws]', 0.0))
+        ausschaltarbeit = float(feature_values.get('AusSchaltarbeit [Ws]', 0.0))
         if schaltarbeit > work_threshold or ausschaltarbeit > work_threshold:
             files_to_remove.add(file_name)
 
     if files_to_remove:
-        print(f"Entferne {len(files_to_remove)} Messungen mit Arbeit > {work_threshold} Ws:")
+        print(f"Entferne {len(files_to_remove)} Messungen mit Arbeit > {work_threshold} [Ws]:")
         for file_name in sorted(list(files_to_remove)):
             print(f"  - {file_name}")
         
@@ -650,16 +661,16 @@ def analyze_oscilloscope_data(data_folder):
     else:
         print(f"Keine Messungen überschreiten den Schwellenwert von {work_threshold} Ws. Alle Daten werden beibehalten.")
 
-    # 8. Globale, ausgerichtete Achsen-Limits für alle Plots berechnen
-    global_limits = calculate_and_align_global_limits(final_df, time_col, opener_time_col, volt_col, curr_col, 'Schaltleistung W')
+    # 9. Globale, ausgerichtete Achsen-Limits für alle Plots berechnen
+    global_limits = calculate_and_align_global_limits(final_df, time_col, opener_time_col, volt_col, curr_col, 'Schaltleistung [W]')
 
-    # 9. Allgemeine Daten verarbeiten/analysieren (mit den finalen Werten)
+    # 10. Allgemeine Daten verarbeiten/analysieren (mit den finalen Werten)
     process_data(final_df)
 
-    # 10. Feature-Zusammenfassungs-Plot erstellen
+    # 11. Feature-Zusammenfassungs-Plot erstellen
     create_feature_summary_plot(features)
 
-    # 11. Interaktiven Analyse-Plot erstellen und Referenzen auf die Buttons halten
+    # 12. Interaktiven Analyse-Plot erstellen und Referenzen auf die Buttons halten
     button_references = None
     if all(col in final_df.columns for col in [time_col, volt_col, curr_col]):
         button_references = create_interactive_plot(final_df, time_col, opener_time_col, volt_col, curr_col, features, global_limits)
