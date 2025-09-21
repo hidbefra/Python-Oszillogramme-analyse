@@ -56,3 +56,7 @@ Das Skript führt die folgenden Analyseschritte in der angegebenen Reihenfolge d
 5.  **Feature-Extraktion:** Berechnet Prellen, Schalt- und Ausschaltarbeit in definierten Zeitfenstern.
 6.  **Datenfilterung:** Messungen, deren Schalt- oder Ausschaltarbeit einen Schwellenwert (standardmäßig 100 Ws) überschreiten, werden von der weiteren Analyse und Visualisierung ausgeschlossen.
 7.  **Visualisierung:** Erstellt die interaktiven Plots auf Basis der bereinigten und angereicherten Daten.
+
+<img width="1171" height="417" alt="grafik" src="https://github.com/user-attachments/assets/93797a70-0283-4ba1-ac99-ac444542ba29" />
+
+<img width="1677" height="877" alt="grafik" src="https://github.com/user-attachments/assets/76fcaa15-b026-4d28-8fdb-f0b26557450f" />
