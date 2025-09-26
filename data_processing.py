@@ -6,6 +6,7 @@ import glob
 import os
 import numpy as np
 import pandas as pd
+from typing import Tuple
 from scipy.optimize import minimize
 
 import config
@@ -232,7 +233,7 @@ def extract_features(df: pd.DataFrame) -> dict:
     return features
 
 
-def filter_data_by_features(df: pd.DataFrame, features: dict) -> (pd.DataFrame, dict):
+def filter_data_by_features(df: pd.DataFrame, features: dict) -> Tuple[pd.DataFrame, dict]:
     """
     Filtert den DataFrame und das Feature-Dictionary basierend auf einem Schwellenwert für die Arbeit.
     """
