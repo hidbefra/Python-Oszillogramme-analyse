@@ -10,8 +10,8 @@ from PyQt5.QtWidgets import (
 from PyQt5.QtCore import QThread, pyqtSignal, QStringListModel
 
 import data_processing
-import plotting
-import config
+import plotting 
+from config_loader import settings as config
 
 
 class AnalysisWorker(QThread):

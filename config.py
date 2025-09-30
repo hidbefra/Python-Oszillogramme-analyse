@@ -10,7 +10,7 @@ IMPORT_CONFIG = {
     "skiprows": 11,
     "header": None,
     "usecols": [0, 1, 2],
-    "file_sampling_rate": 1,  # Jede n-te Datei laden (1 für alle)
+    "file_sampling_rate": 20,  # Jede n-te Datei laden (1 für alle)
 }
 
 # --- Spaltennamen ---
@@ -28,7 +28,7 @@ COLUMN_NAMES = {
 # --- Analyse-Parameter ---
 ANALYSIS_CONFIG = {
     # Zeitachsen-Verschiebung: Schwellenwert für Strom, um t=0 zu finden
-    "time_shift_current_threshold": 5.0,
+    "time_shift_current_threshold": 1.0,
 
     # Spannungskorrektur: Zeitfenster für die Optimierung
     "voltage_correction_time_range": (0.01, 0.03),

@@ -9,7 +9,7 @@ import pandas as pd
 from typing import Tuple
 from scipy.optimize import minimize
 
-import config
+from config_loader import settings as config
 
 
 def import_data(data_folder: str):

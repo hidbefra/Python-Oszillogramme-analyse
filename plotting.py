@@ -10,7 +10,7 @@ from PyQt5.QtWidgets import QComboBox, QWidget, QHBoxLayout, QCompleter
 from PyQt5.QtCore import Qt
 from typing import Dict, Tuple, List
 
-import config
+from config_loader import settings as config
 
 
 class PlotManager:
