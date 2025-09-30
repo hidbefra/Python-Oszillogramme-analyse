@@ -1,0 +1,15 @@
+<svg width="256" height="256" viewBox="0 0 256 256" fill="none" xmlns="http://www.w3.org/2000/svg">
+    <!-- Hintergrund -->
+    <rect width="256" height="256" rx="32" fill="#2E3440"/>
+
+    <!-- Gitter -->
+    <path d="M64 32V224" stroke="#4C566A" stroke-width="4"/>
+    <path d="M128 32V224" stroke="#4C566A" stroke-width="4"/>
+    <path d="M192 32V224" stroke="#4C566A" stroke-width="4"/>
+    <path d="M32 64H224" stroke="#4C566A" stroke-width="4"/>
+    <path d="M32 128H224" stroke="#4C566A" stroke-width="4"/>
+    <path d="M32 192H224" stroke="#4C566A" stroke-width="4"/>
+
+    <!-- Oszillogramm-Signal (mit Prellen) -->
+    <path d="M40 80H100V180H115V140H130V180H140V160H150V180H216" stroke="#88C0D0" stroke-width="12" stroke-linejoin="round" stroke-linecap="round"/>
+</svg>

@@ -25,10 +25,10 @@ Dieses Python-Skript dient zur automatisierten Analyse und Visualisierung von Os
 
 ## Anforderungen
 
-Stelle sicher, dass die folgenden Python-Bibliotheken installiert sind:
+Für die Ausführung als Python-Skript, stelle sicher, dass die folgenden Bibliotheken installiert sind:
 
 ```bash
-pip install pandas matplotlib PyQt5 scipy numpy
+pip install -r requirements.txt
 ```
 
 ## Verwendung

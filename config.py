@@ -10,7 +10,7 @@ IMPORT_CONFIG = {
     "skiprows": 11,
     "header": None,
     "usecols": [0, 1, 2],
-    "file_sampling_rate": 20,  # Jede n-te Datei laden (1 für alle)
+    "file_sampling_rate": 1,  # Jede n-te Datei laden (1 für alle)
 }
 
 # --- Spaltennamen ---

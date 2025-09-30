@@ -23,7 +23,7 @@ class PlotManager:
 
     def _navigate(self, step: int):
         """Interne Navigationslogik."""
-        if not self.files:
+        if self.files.size == 0:
             return
         self.current_index = (self.current_index + step) % len(self.files)
         self.update_all_plots()
