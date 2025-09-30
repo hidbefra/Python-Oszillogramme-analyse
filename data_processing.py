@@ -57,24 +57,25 @@ def import_data(data_folder: str):
 def shift_time_axis(df: pd.DataFrame) -> pd.DataFrame:
     """
     Verschiebt die Zeitachse für jede Messung so, dass t=0 an der Stelle liegt,
-    an der der Strom erstmals den Schwellenwert überschreitet.
+    an der sich die Spannung erstmals um mehr als den Schwellenwert ändert.
     """
     time_col = config.COLUMN_NAMES["time"]
-    curr_col = config.COLUMN_NAMES["current"]
-    threshold = config.ANALYSIS_CONFIG["time_shift_current_threshold"]
+    volt_col = config.COLUMN_NAMES["voltage"]
+    threshold = config.ANALYSIS_CONFIG["time_shift_voltage_delta_threshold"]
     
-    print(f"\n--- Zeitachse anpassen (t=0 bei |Strom| > {threshold}A) ---")
+    print(f"\n--- Zeitachse anpassen (t=0 bei |ΔSpannung| > {threshold}V) ---")
 
     processed_groups = []
     for file_name, group in df.groupby(config.COLUMN_NAMES["source_file"]):
         group_copy = group.copy()
-        trigger_index = group_copy[abs(group_copy[curr_col]) > threshold].first_valid_index()
+        voltage_delta = group_copy[volt_col].diff().abs()
+        trigger_index = voltage_delta[voltage_delta > threshold].first_valid_index()
 
         if trigger_index is not None:
             t_zero = group_copy.loc[trigger_index, time_col]
             group_copy[time_col] = group_copy[time_col] - t_zero
         else:
-            print(f"Warnung: In '{file_name}' wurde der Strom-Schwellenwert nie überschritten. Zeitachse nicht verschoben.")
+            print(f"Warnung: In '{file_name}' wurde der Spannungs-Schwellenwert nie überschritten. Zeitachse nicht verschoben.")
         processed_groups.append(group_copy)
     return pd.concat(processed_groups, ignore_index=True)
 
@@ -135,16 +136,32 @@ def add_simplified_voltage_column(df: pd.DataFrame) -> pd.DataFrame:
 
 
 def add_power_column(df: pd.DataFrame) -> pd.DataFrame:
-    """Fügt eine Spalte für die Schaltleistung hinzu."""
+    """
+    Fügt eine Spalte für die Schaltleistung hinzu.
+    Die Leistung wird nur in den relevanten Zeitfenstern (Einschalten, Ausschalten) berechnet.
+    """
+    time_col = config.COLUMN_NAMES["time"]
+    opener_time_col = config.COLUMN_NAMES["opener_time"]
     volt_col = config.COLUMN_NAMES["voltage"]
     curr_col = config.COLUMN_NAMES["current"]
     new_col_name = config.COLUMN_NAMES["power"]
-    curr_threshold = config.ANALYSIS_CONFIG["power_calculation_current_threshold"]
-    volt_threshold = config.ANALYSIS_CONFIG["power_calculation_voltage_threshold"]
     
-    print(f"\n--- Spalte '{new_col_name}' hinzufügen ---")
-    condition = (df[curr_col].abs() > curr_threshold) & (df[volt_col].abs() > volt_threshold)
-    df[new_col_name] = np.where(condition, df[volt_col] * df[curr_col], 0)
+    prellen_range = config.FEATURE_CONFIG["prellen_time_range"]
+    ausschalt_range = config.FEATURE_CONFIG["ausschalt_time_range"]
+    volt_threshold = config.ANALYSIS_CONFIG["power_calculation_voltage_threshold"]
+    curr_threshold = config.ANALYSIS_CONFIG["power_calculation_current_threshold"]
+
+    print(f"\n--- Spalte '{new_col_name}' hinzufügen (nur in Schaltfenstern) ---")
+    
+    # Bedingung 1: Innerhalb eines der relevanten Zeitfenster
+    in_prellen_window = (df[time_col] >= prellen_range[0]) & (df[time_col] <= prellen_range[1])
+    in_ausschalt_window = (df[opener_time_col] >= ausschalt_range[0]) & (df[opener_time_col] <= ausschalt_range[1])
+    in_any_window = in_prellen_window | in_ausschalt_window
+    
+    # Bedingung 2: Spannung und Strom überschreiten die Schwellenwerte
+    thresholds_exceeded = (df[volt_col].abs() > volt_threshold) & (df[curr_col].abs() > curr_threshold)
+    
+    df[new_col_name] = np.where(in_any_window & thresholds_exceeded, df[volt_col] * df[curr_col], 0)
     return df
 
 

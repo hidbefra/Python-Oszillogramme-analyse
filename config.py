@@ -27,8 +27,8 @@ COLUMN_NAMES = {
 
 # --- Analyse-Parameter ---
 ANALYSIS_CONFIG = {
-    # Zeitachsen-Verschiebung: Schwellenwert für Strom, um t=0 zu finden
-    "time_shift_current_threshold": 1.0,
+    # Zeitachsen-Verschiebung: Schwellenwert für die Spannungsänderung [V], um t=0 zu finden
+    "time_shift_voltage_delta_threshold": 20.0,
 
     # Spannungskorrektur: Zeitfenster für die Optimierung
     "voltage_correction_time_range": (0.01, 0.03),
@@ -37,8 +37,8 @@ ANALYSIS_CONFIG = {
     "simplified_voltage_threshold": 1.0,
 
     # Schaltleistung: Schwellenwerte, ab denen die Leistung berechnet wird
-    "power_calculation_current_threshold": 0.3,
     "power_calculation_voltage_threshold": 0.8,
+    "power_calculation_current_threshold": 0.6,
 
     # Öffner-Zeit: Startzeit und Spannungsschwelle für die Suche nach dem Öffnungsereignis
     "opener_time_search_start": 0.4,
