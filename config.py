@@ -4,6 +4,9 @@ Zentrale Konfigurationsdatei für das Oszillogramm-Analyse-Tool.
 Alle Einstellungen, Schwellenwerte und Parameter sind hier definiert.
 """
 
+# --- Anwendungsversion ---
+VERSION = "1.1.0"
+
 # --- Datenimport-Einstellungen ---
 IMPORT_CONFIG = {
     "data_folder": "data",
