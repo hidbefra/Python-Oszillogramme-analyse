@@ -3,15 +3,28 @@
 Haupt-GUI-Modul für das Oszillogramm-Analyse-Tool.
 Ermöglicht die Auswahl von Ordnern und das Starten von Analysen in separaten Threads.
 """
+import sys
 from PyQt5.QtWidgets import (
     QApplication, QWidget, QVBoxLayout, QPushButton,
-    QFileDialog, QLabel, QLineEdit, QHBoxLayout, QListView
+    QFileDialog, QLabel, QLineEdit, QHBoxLayout, QTextEdit
 )
-from PyQt5.QtCore import QThread, pyqtSignal, QStringListModel
+from PyQt5.QtCore import QThread, pyqtSignal, QObject
+from PyQt5.QtGui import QTextCursor
 
 import data_processing
 import plotting 
 from config_loader import settings as config
+
+
+class Stream(QObject):
+    """Leitet Text von einem Stream (wie stdout) an ein PyQt-Signal weiter."""
+    newText = pyqtSignal(str)
+
+    def write(self, text):
+        self.newText.emit(str(text))
+
+    def flush(self):
+        pass # Nötig für die Stream-Schnittstelle
 
 
 class AnalysisWorker(QThread):
@@ -48,7 +61,7 @@ class MainWindow(QWidget):
     def __init__(self):
         super().__init__()
         self.setWindowTitle("Oszillogramm Analyse Tool")
-        self.setGeometry(100, 100, 500, 300)
+        self.setGeometry(100, 100, 800, 600)
         self.threads = []
         self.plot_button_references = [] # Referenzen auf Plot-Buttons halten
 
@@ -71,6 +84,26 @@ class MainWindow(QWidget):
 
         self.status_label = QLabel("Bereit. Bitte einen Ordner wählen und Analyse starten.")
         layout.addWidget(self.status_label)
+
+        # Log-Konsole hinzufügen
+        self.log_console = QTextEdit()
+        self.log_console.setReadOnly(True)
+        layout.addWidget(self.log_console)
+
+        # stdout und stderr umleiten
+        self.redirect_streams()
+
+    def redirect_streams(self):
+        """Leitet print-Anweisungen und Fehler in die Log-Konsole um."""
+        # stdout
+        sys.stdout = Stream(newText=self.on_new_log_text)
+        # stderr
+        sys.stderr = Stream(newText=self.on_new_log_text)
+
+    def on_new_log_text(self, text):
+        """Fügt Text zur Log-Konsole hinzu und scrollt nach unten."""
+        self.log_console.moveCursor(QTextCursor.End)
+        self.log_console.insertPlainText(text)
 
     def select_folder(self):
         """Öffnet einen Dialog zur Ordnerauswahl."""
